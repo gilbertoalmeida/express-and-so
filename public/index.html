@@ -24,11 +24,13 @@
   <div style="width:500px; margin:auto; max-width: 90%;">
     <p>
       Location <br>
-      latitude: <span id="lat"></span>&deg;<br>
-      longitude: <span id="lon"></span>&deg;<br>
+      latitude: <span id="lat">51.505</span>&deg;<br>
+      longitude: <span id="lon">-0.09</span>&deg;<br>
     </p>
+    <button onclick="getCurrentPos()">Get current position <span id="posLoading"></span></button>
 
-    <div id="mapid" style="height: 180px; width: 100%;"></div>
+
+    <div id="mapid" style="height: 180px; width: 100%; margin-top: 20px"></div>
 
     <img src="cute.jpg" style="width: 100%; margin-top: 20px" />
 
@@ -40,27 +42,51 @@
 
 <script>
 
-  if ("geolocation" in navigator) {
-    let geo = navigator.geolocation
-    geo.getCurrentPosition(res => {
-      let lat = res.coords.latitude
-      let lon = res.coords.longitude
-      document.getElementById("lat").textContent = lat
-      document.getElementById("lon").textContent = lon
+  const getCurrentPos = () => {
+    if ("geolocation" in navigator) {
+      document.getElementById("posLoading").textContent = "(fetching...)"
+      let geo = navigator.geolocation
+      geo.getCurrentPosition(async res => {
+        //these positions or exact on mobile or other device that has a gps. In my laptop browser they were way off (ingolstadt)
+        //I can condition to when a GPS is present, I can zoom more in setView and have a smaller radius
+        let lat = res.coords.latitude
+        let lon = res.coords.longitude
+        document.getElementById("lat").textContent = lat
+        document.getElementById("lon").textContent = lon
 
-      mymap.setView([lat, lon], 5)
-      L.circle([lat, lon], {
-        color: 'red',
-        fillColor: '#f03',
-        fillOpacity: 0.5,
-        radius: 500000
-      }).addTo(mymap);
-    })
-  } else {
-    console.log("geolocation not available")
-    document.getElementById("lat").textContent = "geolocation not available"
-    document.getElementById("lon").textContent = "geolocation not available"
+        mymap.setView([lat, lon], 5)
+        L.circle([lat, lon], {
+          color: 'red',
+          fillColor: '#f03',
+          fillOpacity: 0.5,
+          radius: 500000
+        }).addTo(mymap);
+
+        document.getElementById("posLoading").textContent = ""
+
+        const data = { lat, lon }
+        const options = {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(data)
+        }
+
+        const response = await fetch("/api", options)
+        const json = await response.json()
+        console.log(json)
+
+      })
+    } else {
+      console.log("geolocation not available")
+      document.getElementById("lat").textContent = "geolocation not available"
+      document.getElementById("lon").textContent = "geolocation not available"
+    }
+
   }
+
+
 
   var mymap = L.map('mapid').setView([51.505, -0.09], 13);
 

@@ -1,9 +1,12 @@
 //import express from "express"
+const { response } = require("express")
 const express = require("express")
 const fs = require('fs')
 const https = require('https')
 
 const app = express()
+
+app.use(express.json({ limit: "1mb" }))
 
 // app.get("/", (req, res) => {
 //   res.send({
@@ -17,7 +20,22 @@ const app = express()
 //   res.send("oi")
 // })
 
+app.post("/api", async (req, res) => {
+
+  fs.writeFile("position.txt", JSON.stringify(req.body), err => {
+    if (err) throw err;
+    console.log('The file has been saved!');
+  })
+
+  res.json({
+    status: "success",
+    latitude: req.body.lat,
+    longitude: req.body.lon
+  })
+})
+
 app.use(express.static("public"))
+
 
 var privateKey = fs.readFileSync('./localhost.key');
 var certificate = fs.readFileSync('./localhost.crt');
